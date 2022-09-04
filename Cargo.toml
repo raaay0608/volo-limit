@@ -2,5 +2,6 @@
 members = [
   "volo-limit-grpc",
   "volo-limit-thrift",
+  "volo-concurrency-limiter",
 ]
 resolver = "2"

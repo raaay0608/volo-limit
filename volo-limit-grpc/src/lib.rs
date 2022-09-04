@@ -2,6 +2,7 @@
 #![feature(generic_associated_types)]
 #![feature(type_alias_impl_trait)]
 
+#[derive(Clone)]
 pub struct GrpcLimitService<S>(S);
 
 #[volo::service]

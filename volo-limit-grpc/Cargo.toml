@@ -1,0 +1,8 @@
+[package]
+name = "volo-limit-grpc"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+volo = "*"
+volo-grpc = "*"

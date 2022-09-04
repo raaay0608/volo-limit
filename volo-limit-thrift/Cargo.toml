@@ -1,0 +1,9 @@
+[package]
+name = "volo-limit-thrift"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+volo = "*"
+volo-thrift = "*"
+pilota = "*"

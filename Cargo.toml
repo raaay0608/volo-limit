@@ -1,0 +1,6 @@
+[workspace]
+members = [
+  "volo-limit-grpc",
+  "volo-limit-thrift",
+]
+resolver = "2"

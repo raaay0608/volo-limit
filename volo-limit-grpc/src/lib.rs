@@ -1,0 +1,46 @@
+#![feature(associated_type_bounds)]
+#![feature(generic_associated_types)]
+#![feature(type_alias_impl_trait)]
+
+pub struct GrpcLimitService<S>(S);
+
+#[volo::service]
+impl<Cx, Request, S, OriginResponse, LimitError> volo::Service<Cx, Request> for GrpcLimitService<S>
+where
+    Cx: Send + 'static,
+    Request: Send + 'static,
+    OriginResponse: Send + 'static,
+    LimitError: std::error::Error + Send + 'static,
+    S: Send
+        + 'static
+        + volo::Service<
+            Cx,
+            Request,
+            Response = Result<OriginResponse, volo_grpc::Status>,
+            Error = LimitError,
+        >,
+{
+    async fn call(
+        &mut self,
+        cx: &mut Cx,
+        req: Request,
+    ) -> Result<OriginResponse, volo_grpc::Status> {
+        match self.0.call(cx, req).await {
+            Ok(res) => res,
+            Err(e) => Err(volo_grpc::Status::resource_exhausted(e.to_string())),
+        }
+    }
+}
+
+pub struct GrpcLimitLayer<L>(pub L);
+
+impl<S, L, S0> volo::Layer<S> for GrpcLimitLayer<L>
+where
+    L: volo::Layer<S, Service = S0>,
+{
+    type Service = GrpcLimitService<L::Service>;
+
+    fn layer(self, inner: S) -> Self::Service {
+        GrpcLimitService(self.0.layer(inner))
+    }
+}

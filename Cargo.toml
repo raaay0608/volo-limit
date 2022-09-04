@@ -3,5 +3,6 @@ members = [
   "volo-limit-grpc",
   "volo-limit-thrift",
   "volo-concurrency-limiter",
+  "volo-rate-limiter",
 ]
 resolver = "2"

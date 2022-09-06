@@ -1,4 +1,4 @@
-/// The error type for RateLimiter.
+/// The error type returned by `RateLimiterService`.
 #[derive(Debug)]
 pub struct RateLimiterError;
 

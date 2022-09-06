@@ -2,6 +2,16 @@
 #![feature(generic_associated_types)]
 #![feature(type_alias_impl_trait)]
 
+/// `GrpcLimitService` is a adaptor layer between a limiter and a gRPC service.
+///
+/// Given a arbitary volo service called `S`, a protocol-independent limiter services is a
+/// volo service with its return type is `Result<Result<S::Response, S::Error>, LimitError>`, where
+/// `LimitError` is the error type defined by the limiter and will be returned if request is
+/// determined to be limited.
+///
+/// The `GrpcLimitService` accepts the `Result<Result<S::Response, S::Error>, LimitError>` from limiter
+/// and returns `Result<S::Response, S::Error>`, by converting the `Err(LimitError)` into a gRPC calling
+/// error with a RESOURCE_EXHAUSTED status.
 #[derive(Clone)]
 pub struct GrpcLimitService<S>(S);
 
@@ -33,6 +43,7 @@ where
     }
 }
 
+/// `GrpcLimitLayer` is the `volo::layer` implementation for `GrpcLimitService`.
 pub struct GrpcLimitLayer<L>(pub L);
 
 impl<S, L, S0> volo::Layer<S> for GrpcLimitLayer<L>

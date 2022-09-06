@@ -1,3 +1,12 @@
+/// An bucket rate limiter implementation bases on lazy-update strategy.
+///
+/// The operation is lock-free and based on atomic CAS operations.
+///
+/// Note that this implementation does not provide a precise limitation.
+/// On our tests, this limiter may allow slightly fewer requests to pass (95% - 99% was observed) under normal circumstances,
+/// and may allow quite fewer requests to pass (70% - 90% was observed) if server is overloaded.
+/// 
+/// This limiter is also observed to allow fewer requests to pass if request flow is uneven.
 #[derive(Clone)]
 pub struct AtomicLazyBucketRateLimiter(std::sync::Arc<AtomicLazyBucketRateLimiterSharedStatus>);
 
@@ -79,7 +88,9 @@ impl AtomicLazyBucketRateLimiter {
     }
 }
 
+/// `RateLimiterService` with `AtomicLazyBucketRateLimiter` as its internal limiter implementation.
 pub type AtomicLazyBucketRateLimiterService<S> =
     crate::RateLimiterService<S, AtomicLazyBucketRateLimiter>;
 
+/// The `volo::layer` implementation of `RateLimiterService` with `AtomicLazyBucketRateLimiter` as its internal limiter implementation.
 pub type AtomicLazyBucketRateLimiterLayer = crate::RateLimiterLayer<AtomicLazyBucketRateLimiter>;

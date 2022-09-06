@@ -1,8 +1,10 @@
+/// `ThreadBucketRateLimiter` is a bucket rate limiter implementation,
+/// using a dedicated thread as token producer.
 #[derive(Clone)]
 pub struct ThreadBucketRateLimiter {
     status: std::sync::Arc<ThreadBucketRateLimiterStatus>,
 
-    // wrapped in `Arc<Mutex>` to satisfy `Clone` and `Send`.
+    // wrapped in `Arc<Mutex<...>>` to satisfy `Clone` and `Send` requirements.
     handle: std::sync::Arc<std::sync::Mutex<Option<std::thread::JoinHandle<()>>>>,
 }
 
@@ -12,6 +14,7 @@ struct ThreadBucketRateLimiterStatus {
 
     tokens: std::sync::atomic::AtomicI64,
 
+    // `tx` and `rx` are used as thread termination notifier.
     tx: std::sync::Mutex<std::sync::mpsc::Sender<()>>,
     rx: std::sync::Mutex<std::sync::mpsc::Receiver<()>>,
 }
@@ -93,6 +96,8 @@ impl ThreadBucketRateLimiter {
     }
 }
 
+/// `RateLimiterService` with `ThreadBucketRateLimiter` as its internal limiter implementation.
 pub type ThreadBucketRateLimiterService<S> = crate::RateLimiterService<S, ThreadBucketRateLimiter>;
 
+/// The `volo::layer` implementation of `RateLimiterService` with `ThreadBucketRateLimiter` as its internal limiter implementation.
 pub type ThreadBucketRateLimiterLayer = crate::RateLimiterLayer<ThreadBucketRateLimiter>;

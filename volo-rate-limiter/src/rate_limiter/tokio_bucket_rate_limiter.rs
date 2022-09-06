@@ -1,8 +1,12 @@
+/// `ThreadBucketRateLimiter` is a bucket rate limiter implementation,
+/// using a dedicated tokio task as token producer.
+///
+/// This rate limiter implementation requires the server using tokio as runtime.
 #[derive(Clone)]
 pub struct TokioBucketRateLimiter {
     status: std::sync::Arc<TokioBucketRateLimiterStatus>,
 
-    // wrapped in `Arc<Mutex>` to satisfy `Clone` and `Send`.
+    // wrapped in `Arc<Mutex<...>>` to satisfy `Clone` and `Send` requirements.
     handle: std::sync::Arc<std::sync::Mutex<Option<tokio::task::JoinHandle<()>>>>,
 }
 
@@ -58,7 +62,7 @@ impl Drop for TokioBucketRateLimiter {
     fn drop(&mut self) {
         self.status.notify.notify_one();
 
-        // XXX: block_on async funtion in sync function
+        // XXX: block on async funtion in sync function
         futures::executor::block_on(self.handle.lock().unwrap().take().unwrap())
             .expect("joining task panicked");
     }
@@ -82,6 +86,8 @@ impl TokioBucketRateLimiter {
     }
 }
 
+/// `RateLimiterService` with `TokioBucketRateLimiter` as its internal limiter implementation.
 pub type TokioBucketRateLimiterService<S> = crate::RateLimiterService<S, TokioBucketRateLimiter>;
 
+/// The `volo::layer` implementation of `RateLimiterService` with `TokioBucketRateLimiter` as its internal limiter implementation.
 pub type TokioBucketRateLimiterLayer = crate::RateLimiterLayer<TokioBucketRateLimiter>;

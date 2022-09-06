@@ -1,6 +1,7 @@
 use crate::RateLimiter;
 use crate::RateLimiterError;
 
+/// `RateLimiterService` is a `volo::service` implementation of rate limiter.
 #[derive(Clone)]
 pub struct RateLimiterService<S, L> {
     inner: S,
@@ -30,6 +31,7 @@ where
     }
 }
 
+/// The implementation of `volo::Layer` for `RateLimiterService`.
 pub struct RateLimiterLayer<L> {
     interval: std::time::Duration,
     limit: u64,
@@ -38,6 +40,7 @@ pub struct RateLimiterLayer<L> {
 }
 
 impl<L> RateLimiterLayer<L> {
+    /// Creates a new `RateLimiterLayer` with limit interval and quota.
     pub fn new(interval: impl Into<std::time::Duration>, limit: u64) -> Self {
         Self {
             interval: interval.into(),
@@ -46,6 +49,7 @@ impl<L> RateLimiterLayer<L> {
         }
     }
 
+    /// Creates a new `RateLimiterLayer` with a limit interval of a second.
     pub fn with_qps(qps: u64) -> Self {
         Self {
             interval: std::time::Duration::from_secs(1),

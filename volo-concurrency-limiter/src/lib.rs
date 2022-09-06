@@ -2,14 +2,18 @@
 #![feature(type_alias_impl_trait)]
 
 /// `ConcurrencyLimiterService` implements a basic concurrency limiter.
+/// 
+/// The concurrency is the number of requests that entered the service's `call` method but not leaved yet.
 ///
-/// # Limitation
+/// # Restriction
 ///
-/// This limiter may not effects if the inner service does not perform any async operations.
-/// This can happen with some pure compute services and caching services.
+/// This limiter may not work if the inner service does not perform any async operations.
+/// This may happen with some pure computing services and caching services.
 ///
-/// The reason is that, without any async operations, the service process becomes "atomic" that each worker will never begin to handle a new request until the current request is finished.
-/// Base on this situation, the possibly maximum concurrency is the number of the workers (which usually equals to the number of CPU logical cores), and it may never reach the passed-in limitation.
+/// The reason here is that, without any async operations, the service's `call` method becomes "atomic"
+/// that each worker will not begin to handle a new request until the current request is finished.
+/// Base on this situation, the possibly maximum concurrency is the number of the workers (usually equals to the number of logical CPU cores),
+/// which may never reach the passed-in limitation.
 #[derive(Clone)]
 pub struct ConcurrencyLimiterService<S> {
     inner: S,
@@ -21,7 +25,8 @@ struct ConcurrencyLimiterServiceSharedStatus {
     curr: std::sync::atomic::AtomicU64,
 }
 
-/// `ConcurrencyLimiterServiceror` is the error type raised by `ConcurrencyLimiterService` on determining the requested will be rejected.
+/// `ConcurrencyLimiterServiceror` is the error type returned by `ConcurrencyLimiterService`
+/// when determining that the request will be rejected.
 #[derive(Debug)]
 pub struct ConcurrencyLimiterServiceror;
 
@@ -69,16 +74,13 @@ where
     }
 }
 
+// `ConcurrencyLimiterServiceLayer` is the `volo::layer` implementation of `ConcurrencyLimiterService`.
 pub struct ConcurrencyLimiterServiceLayer {
     limit: u64,
 }
 
 impl ConcurrencyLimiterServiceLayer {
     pub fn with_concurrency_limit(limit: u64) -> Self {
-        Self { limit }
-    }
-
-    pub fn with_limit(self, limit: u64) -> Self {
         Self { limit }
     }
 }

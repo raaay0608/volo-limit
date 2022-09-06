@@ -14,5 +14,7 @@ pub use atomic_lazy_bucket_rate_limiter::*;
 mod thread_bucket_rate_limiter;
 pub use thread_bucket_rate_limiter::*;
 
+#[cfg(feature = "tokio")]
 mod tokio_bucket_rate_limiter;
+#[cfg(feature = "tokio")]
 pub use tokio_bucket_rate_limiter::*;

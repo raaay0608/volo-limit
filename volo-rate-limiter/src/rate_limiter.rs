@@ -1,7 +1,7 @@
 // The trait of a rate limiter.
 pub trait RateLimiter: Send {
-    /// Creates a `RateLimiter` with limit interval and limit quota.
-    fn new(interval: impl Into<std::time::Duration>, limit: u64) -> Self;
+    /// Creates a `RateLimiter` with limit duration and limit quota.
+    fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self;
 
     /// Try to acquire a request quota.
     /// If the request is determined to be passed, the method returns `Ok(())`, otherwise returns `Err(())`

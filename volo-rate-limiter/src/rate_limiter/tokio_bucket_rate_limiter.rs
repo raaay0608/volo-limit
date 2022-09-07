@@ -11,8 +11,8 @@ pub struct TokioBucketRateLimiter {
 }
 
 struct TokioBucketRateLimiterStatus {
-    interval: std::time::Duration,
-    limit: i64,
+    duration: std::time::Duration,
+    quota: i64,
 
     tokens: std::sync::atomic::AtomicI64,
 
@@ -20,13 +20,13 @@ struct TokioBucketRateLimiterStatus {
 }
 
 impl crate::RateLimiter for TokioBucketRateLimiter {
-    fn new(interval: impl Into<std::time::Duration>, limit: u64) -> Self {
-        let limit: i64 = limit.try_into().expect("limit out of range");
+    fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
+        let quota: i64 = quota.try_into().expect("limit quota out of range");
 
         let status = std::sync::Arc::new(TokioBucketRateLimiterStatus {
-            interval: interval.into(),
-            limit: limit,
-            tokens: std::sync::atomic::AtomicI64::new(limit),
+            duration: duration.into(),
+            quota: quota,
+            tokens: std::sync::atomic::AtomicI64::new(quota),
             notify: tokio::sync::Notify::new(),
         });
 
@@ -72,14 +72,14 @@ impl TokioBucketRateLimiter {
     async fn proc(status: std::sync::Arc<TokioBucketRateLimiterStatus>) {
         let mut instant = tokio::time::Instant::now();
         loop {
-            instant += status.interval;
+            instant += status.duration;
 
             tokio::select! {
                 _ = status.notify.notified() => {
                     break;
                 },
                 _ = tokio::time::sleep_until(instant) => {
-                    status.tokens.store(status.limit, std::sync::atomic::Ordering::Relaxed);
+                    status.tokens.store(status.quota, std::sync::atomic::Ordering::Relaxed);
                 },
             }
         }

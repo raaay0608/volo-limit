@@ -1,35 +1,36 @@
 /// An bucket rate limiter implementation bases on lazy-update strategy.
 ///
-/// The operation is lock-free and based on atomic CAS operations.
+/// The operations are lock-free and based on atomic CAS operations.
 ///
 /// Note that this implementation does not provide a precise limitation.
+///
 /// On our tests, this limiter may allow slightly fewer requests to pass (95% - 99% was observed) under normal circumstances,
 /// and may allow quite fewer requests to pass (70% - 90% was observed) if server is overloaded.
-/// 
-/// This limiter is also observed to allow fewer requests to pass if request flow is uneven.
+///
+/// This limiter is also observed to allow quite fewer requests to pass if request flow is uneven.
 #[derive(Clone)]
 pub struct AtomicLazyBucketRateLimiter(std::sync::Arc<AtomicLazyBucketRateLimiterSharedStatus>);
 
 struct AtomicLazyBucketRateLimiterSharedStatus {
-    interval_in_nanos: u64,
-    limit: i64,
+    duration_in_nanos: u64,
+    quota: i64,
 
     last_updated_timestamp_in_nanos: std::sync::atomic::AtomicU64,
     tokens: std::sync::atomic::AtomicI64,
 }
 
 impl crate::RateLimiter for AtomicLazyBucketRateLimiter {
-    fn new(interval: impl Into<std::time::Duration>, limit: u64) -> Self {
-        let limit: i64 = limit.try_into().expect("limit out of range");
+    fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
+        let quota: i64 = quota.try_into().expect("limit quota out of range");
 
         Self(std::sync::Arc::new(
             AtomicLazyBucketRateLimiterSharedStatus {
-                interval_in_nanos: interval.into().as_nanos() as u64,
-                limit: limit,
+                duration_in_nanos: duration.into().as_nanos() as u64,
+                quota: quota,
                 last_updated_timestamp_in_nanos: std::sync::atomic::AtomicU64::new(
                     Self::now_timestamp_in_nanos(),
                 ),
-                tokens: std::sync::atomic::AtomicI64::new(limit),
+                tokens: std::sync::atomic::AtomicI64::new(quota),
             },
         ))
     }
@@ -48,7 +49,7 @@ impl AtomicLazyBucketRateLimiter {
             .last_updated_timestamp_in_nanos
             .load(std::sync::atomic::Ordering::Relaxed);
 
-        if now < last_updated + self.0.interval_in_nanos {
+        if now < last_updated + self.0.duration_in_nanos {
             return;
         }
 
@@ -60,7 +61,7 @@ impl AtomicLazyBucketRateLimiter {
         ) {
             self.0
                 .tokens
-                .store(self.0.limit, std::sync::atomic::Ordering::Relaxed);
+                .store(self.0.quota, std::sync::atomic::Ordering::Relaxed);
         }
     }
 

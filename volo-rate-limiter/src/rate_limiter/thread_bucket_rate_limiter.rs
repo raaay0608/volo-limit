@@ -9,8 +9,8 @@ pub struct ThreadBucketRateLimiter {
 }
 
 struct ThreadBucketRateLimiterStatus {
-    interval: std::time::Duration,
-    limit: i64,
+    duration: std::time::Duration,
+    quota: i64,
 
     tokens: std::sync::atomic::AtomicI64,
 
@@ -20,15 +20,15 @@ struct ThreadBucketRateLimiterStatus {
 }
 
 impl crate::RateLimiter for ThreadBucketRateLimiter {
-    fn new(interval: impl Into<std::time::Duration>, limit: u64) -> Self {
-        let limit: i64 = limit.try_into().expect("limit out of range");
+    fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
+        let quota: i64 = quota.try_into().expect("limit quota out of range");
 
         let (tx, rx) = std::sync::mpsc::channel();
 
         let status = std::sync::Arc::new(ThreadBucketRateLimiterStatus {
-            interval: interval.into(),
-            limit: limit,
-            tokens: std::sync::atomic::AtomicI64::new(limit),
+            duration: duration.into(),
+            quota: quota,
+            tokens: std::sync::atomic::AtomicI64::new(quota),
             tx: std::sync::Mutex::new(tx),
             rx: std::sync::Mutex::new(rx),
         });
@@ -78,7 +78,7 @@ impl ThreadBucketRateLimiter {
     fn proc(status: std::sync::Arc<ThreadBucketRateLimiterStatus>) {
         let mut instant = std::time::Instant::now();
         loop {
-            instant += status.interval;
+            instant += status.duration;
             match status
                 .rx
                 .lock()
@@ -91,7 +91,7 @@ impl ThreadBucketRateLimiter {
 
             status
                 .tokens
-                .store(status.limit, std::sync::atomic::Ordering::Relaxed);
+                .store(status.quota, std::sync::atomic::Ordering::Relaxed);
         }
     }
 }

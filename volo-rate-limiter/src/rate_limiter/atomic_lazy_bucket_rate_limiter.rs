@@ -1,6 +1,8 @@
-/// An bucket rate limiter implementation bases on lazy-update strategy.
+/// A bucket rate limiter implementation bases on lazy-update strategy.
 ///
 /// The operations are lock-free and based on atomic CAS operations.
+///
+/// # Notice
 ///
 /// Note that this implementation does not provide a precise limitation.
 ///
@@ -89,9 +91,11 @@ impl AtomicLazyBucketRateLimiter {
     }
 }
 
-/// `RateLimiterService` with `AtomicLazyBucketRateLimiter` as its internal limiter implementation.
+/// A [RateLimiterService](crate::RateLimiterService) with [AtomicLazyBucketRateLimiter]
+/// as its internal rate limiter implementation.
 pub type AtomicLazyBucketRateLimiterService<S> =
     crate::RateLimiterService<S, AtomicLazyBucketRateLimiter>;
 
-/// The `volo::layer` implementation of `RateLimiterService` with `AtomicLazyBucketRateLimiter` as its internal limiter implementation.
+/// The [volo::Layer] implementation of [RateLimiterService](crate::RateLimiterService)
+/// with [AtomicLazyBucketRateLimiter] as its internal rate limiter implementation.
 pub type AtomicLazyBucketRateLimiterLayer = crate::RateLimiterLayer<AtomicLazyBucketRateLimiter>;

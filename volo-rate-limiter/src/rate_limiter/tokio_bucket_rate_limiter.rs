@@ -1,7 +1,7 @@
-/// `ThreadBucketRateLimiter` is a bucket rate limiter implementation,
-/// using a dedicated tokio task as token producer.
+/// A bucket rate limiter implementation, using a dedicated [tokio] task as token producer.
 ///
-/// This rate limiter implementation requires the server using tokio as runtime.
+/// This rate limiter implementation requires the server using [tokio] as its runtime.
+#[doc(cfg(feature = "tokio"))]
 #[derive(Clone)]
 pub struct TokioBucketRateLimiter {
     status: std::sync::Arc<TokioBucketRateLimiterStatus>,
@@ -10,6 +10,7 @@ pub struct TokioBucketRateLimiter {
     handle: std::sync::Arc<std::sync::Mutex<Option<tokio::task::JoinHandle<()>>>>,
 }
 
+#[doc(cfg(feature = "tokio"))]
 struct TokioBucketRateLimiterStatus {
     duration: std::time::Duration,
     quota: i64,
@@ -19,6 +20,7 @@ struct TokioBucketRateLimiterStatus {
     notify: tokio::sync::Notify,
 }
 
+#[doc(cfg(feature = "tokio"))]
 impl crate::RateLimiter for TokioBucketRateLimiter {
     fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
         let quota: i64 = quota.try_into().expect("limit quota out of range");
@@ -58,6 +60,7 @@ impl crate::RateLimiter for TokioBucketRateLimiter {
     }
 }
 
+#[doc(cfg(feature = "tokio"))]
 impl Drop for TokioBucketRateLimiter {
     fn drop(&mut self) {
         self.status.notify.notify_one();
@@ -68,6 +71,7 @@ impl Drop for TokioBucketRateLimiter {
     }
 }
 
+#[doc(cfg(feature = "tokio"))]
 impl TokioBucketRateLimiter {
     async fn proc(status: std::sync::Arc<TokioBucketRateLimiterStatus>) {
         let mut instant = tokio::time::Instant::now();
@@ -86,8 +90,12 @@ impl TokioBucketRateLimiter {
     }
 }
 
-/// `RateLimiterService` with `TokioBucketRateLimiter` as its internal limiter implementation.
+/// A [RateLimiterService](crate::RateLimiterService) with [TokioBucketRateLimiter]
+/// as its internal rate limiter implementation.
+#[doc(cfg(feature = "tokio"))]
 pub type TokioBucketRateLimiterService<S> = crate::RateLimiterService<S, TokioBucketRateLimiter>;
 
-/// The `volo::layer` implementation of `RateLimiterService` with `TokioBucketRateLimiter` as its internal limiter implementation.
+/// The [volo::Layer] implementation of [RateLimiterService](crate::RateLimiterService)
+/// with [TokioBucketRateLimiter] as its internal rate limiter implementation.
+#[doc(cfg(feature = "tokio"))]
 pub type TokioBucketRateLimiterLayer = crate::RateLimiterLayer<TokioBucketRateLimiter>;

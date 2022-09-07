@@ -1,4 +1,4 @@
-/// The error type returned by `RateLimiterService`.
+/// The error type returned by [RateLimiterService](crate::RateLimiterService).
 #[derive(Debug)]
 pub struct RateLimiterError;
 

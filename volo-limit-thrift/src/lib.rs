@@ -1,11 +1,12 @@
+#![doc = include_str!("../README.md")]
 #![feature(associated_type_bounds)]
 #![feature(generic_associated_types)]
 #![feature(type_alias_impl_trait)]
 
-/// `ThriftLimitService` is a adaptor layer between a limiter and a Thrift service.
+/// An adaptor layer between a limiter and a Thrift service.
 ///
-/// Given a arbitary volo service called `S`, a protocol-independent limiter services is a
-/// volo service with its return type is `Result<Result<S::Response, S::Error>, LimitError>`, where
+/// Given a arbitary [volo::Service] instance called `S`, a type-independent limiter service is a
+/// [volo::Service] with its return type is `Result<Result<S::Response, S::Error>, LimitError>`, where
 /// `LimitError` is the error type defined by the limiter and will be returned if request is
 /// determined to be limited.
 ///
@@ -49,7 +50,7 @@ where
     }
 }
 
-/// `ThriftLimitLayer` is the `volo::layer` implementation for `ThriftLimitService`.
+/// The [volo::Layer] implementation for [ThriftLimitService].
 pub struct ThriftLimitLayer<L>(pub L);
 
 impl<S, L, S0> volo::Layer<S> for ThriftLimitLayer<L>

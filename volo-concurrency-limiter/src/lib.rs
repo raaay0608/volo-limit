@@ -1,19 +1,10 @@
+#![doc = include_str!("../README.md")]
 #![feature(generic_associated_types)]
 #![feature(type_alias_impl_trait)]
 
-/// `ConcurrencyLimiterService` implements a basic concurrency limiter.
-/// 
-/// The concurrency is the number of requests that entered the service's `call` method but not leaved yet.
+/// The implementation of basic concurrency limiter as [volo::Service].
 ///
-/// # Restriction
-///
-/// This limiter may not work if the inner service does not perform any async operations.
-/// This may happen with some pure computing services and caching services.
-///
-/// The reason here is that, without any async operations, the service's `call` method becomes "atomic"
-/// that each worker will not begin to handle a new request until the current request is finished.
-/// Base on this situation, the possibly maximum concurrency is the number of the workers (usually equals to the number of logical CPU cores),
-/// which may never reach the passed-in limitation.
+/// For the informations and notices, see the [documentation page of this crate](crate).
 #[derive(Clone)]
 pub struct ConcurrencyLimiterService<S> {
     inner: S,
@@ -25,18 +16,17 @@ struct ConcurrencyLimiterServiceSharedStatus {
     curr: std::sync::atomic::AtomicU64,
 }
 
-/// `ConcurrencyLimiterServiceror` is the error type returned by `ConcurrencyLimiterService`
-/// when determining that the request will be rejected.
+/// The error type returned by [ConcurrencyLimiterService] when determining that the request will be rejected.
 #[derive(Debug)]
-pub struct ConcurrencyLimiterServiceror;
+pub struct ConcurrencyLimiterError;
 
-impl std::fmt::Display for ConcurrencyLimiterServiceror {
+impl std::fmt::Display for ConcurrencyLimiterError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "concurrency limited")
     }
 }
 
-impl std::error::Error for ConcurrencyLimiterServiceror {}
+impl std::error::Error for ConcurrencyLimiterError {}
 
 #[volo::service]
 impl<Cx, Request, S> volo::Service<Cx, Request> for ConcurrencyLimiterService<S>
@@ -49,7 +39,7 @@ where
         &'s mut self,
         cx: &'cx mut Cx,
         req: Request,
-    ) -> Result<Result<S::Response, S::Error>, ConcurrencyLimiterServiceror>
+    ) -> Result<Result<S::Response, S::Error>, ConcurrencyLimiterError>
     where
         's: 'cx,
     {
@@ -61,7 +51,7 @@ where
             self.status
                 .curr
                 .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
-            return Err(ConcurrencyLimiterServiceror);
+            return Err(ConcurrencyLimiterError);
         }
 
         let res = self.inner.call(cx, req).await;
@@ -74,7 +64,7 @@ where
     }
 }
 
-// `ConcurrencyLimiterServiceLayer` is the `volo::layer` implementation of `ConcurrencyLimiterService`.
+/// The [volo::Layer] implementation for [ConcurrencyLimiterService].
 pub struct ConcurrencyLimiterServiceLayer {
     limit: u64,
 }

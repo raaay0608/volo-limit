@@ -1,3 +1,5 @@
+#![doc = include_str!("../README.md")]
+#![feature(doc_cfg)]
 #![feature(associated_type_bounds)]
 #![feature(generic_associated_types)]
 #![feature(type_alias_impl_trait)]

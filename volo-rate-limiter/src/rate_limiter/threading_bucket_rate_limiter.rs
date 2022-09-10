@@ -1,13 +1,13 @@
 /// A bucket rate limiter implementation, using a dedicated [std::thread::Thread] as token producer.
 #[derive(Clone)]
-pub struct ThreadBucketRateLimiter {
-    status: std::sync::Arc<ThreadBucketRateLimiterStatus>,
+pub struct ThreadingBucketRateLimiter {
+    status: std::sync::Arc<ThreadingBucketRateLimiterStatus>,
 
     // wrapped in `Arc<Mutex<...>>` to satisfy `Clone` and `Send` requirements.
     handle: std::sync::Arc<std::sync::Mutex<Option<std::thread::JoinHandle<()>>>>,
 }
 
-struct ThreadBucketRateLimiterStatus {
+struct ThreadingBucketRateLimiterStatus {
     duration: std::time::Duration,
     quota: i64,
 
@@ -18,13 +18,13 @@ struct ThreadBucketRateLimiterStatus {
     rx: std::sync::Mutex<std::sync::mpsc::Receiver<()>>,
 }
 
-impl crate::RateLimiter for ThreadBucketRateLimiter {
+impl crate::RateLimiter for ThreadingBucketRateLimiter {
     fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
         let quota: i64 = quota.try_into().expect("limit quota out of range");
 
         let (tx, rx) = std::sync::mpsc::channel();
 
-        let status = std::sync::Arc::new(ThreadBucketRateLimiterStatus {
+        let status = std::sync::Arc::new(ThreadingBucketRateLimiterStatus {
             duration: duration.into(),
             quota: quota,
             tokens: std::sync::atomic::AtomicI64::new(quota),
@@ -58,7 +58,7 @@ impl crate::RateLimiter for ThreadBucketRateLimiter {
     }
 }
 
-impl Drop for ThreadBucketRateLimiter {
+impl Drop for ThreadingBucketRateLimiter {
     fn drop(&mut self) {
         self.status
             .tx
@@ -73,8 +73,8 @@ impl Drop for ThreadBucketRateLimiter {
     }
 }
 
-impl ThreadBucketRateLimiter {
-    fn proc(status: std::sync::Arc<ThreadBucketRateLimiterStatus>) {
+impl ThreadingBucketRateLimiter {
+    fn proc(status: std::sync::Arc<ThreadingBucketRateLimiterStatus>) {
         let mut instant = std::time::Instant::now();
         loop {
             instant += status.duration;
@@ -95,10 +95,11 @@ impl ThreadBucketRateLimiter {
     }
 }
 
-/// A [RateLimiterService](crate::RateLimiterService) with [ThreadBucketRateLimiter]
+/// A [RateLimiterService](crate::RateLimiterService) with [ThreadingBucketRateLimiter]
 /// as its internal rate limiter implementation.
-pub type ThreadBucketRateLimiterService<S> = crate::RateLimiterService<S, ThreadBucketRateLimiter>;
+pub type ThreadingBucketRateLimiterService<S> =
+    crate::RateLimiterService<S, ThreadingBucketRateLimiter>;
 
 /// The [volo::Layer] implementation of [RateLimiterService](crate::RateLimiterService)
-/// with [ThreadBucketRateLimiter] as its internal rate limiter implementation.
-pub type ThreadBucketRateLimiterLayer = crate::RateLimiterLayer<ThreadBucketRateLimiter>;
+/// with [ThreadingBucketRateLimiter] as its internal rate limiter implementation.
+pub type ThreadingBucketRateLimiterLayer = crate::RateLimiterLayer<ThreadingBucketRateLimiter>;

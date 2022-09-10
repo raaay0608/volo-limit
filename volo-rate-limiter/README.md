@@ -5,19 +5,19 @@ This crate usually used with crate `volo-limit-grpc` or `volo-limit-thrift`, dep
 # Different Implementations of Rate Limiter
 
 This crate provides multiple implementation options, see:
-- [AtomicLazyBucketRateLimiter]
-- [ThreadBucketRateLimiter]
+- [InaccurateBucketRateLimiter]
+- [ThreadingBucketRateLimiter]
 - [TokioBucketRateLimiter]
 
 # Quick Start
 
-Here using [ThreadBucketRateLimiter] for examples.
+Here using [ThreadingBucketRateLimiter] for examples.
 
 ## Volo gRPC Server
 
 ```rust
 use volo_limit_grpc::GrpcLimitLayer;
-use volo_rate_limiter::ThreadBucketRateLimiterLayer;
+use volo_rate_limiter::ThreadingBucketRateLimiterLayer;
 
 #[volo::main]
 async fn main() {
@@ -26,7 +26,7 @@ async fn main() {
 
     volo_gen::ExampleSrver::new(S)
         // add the rate limiter layer as well as the gRPC limiter adaptor layer.
-        .layer(GrpcLimitLayer(ThreadBucketRateLimiterLayer::with_qps(100)))
+        .layer(GrpcLimitLayer(ThreadingBucketRateLimiterLayer::with_qps(100)))
         .run(addr)
         .await
         .unwrap();
@@ -37,7 +37,7 @@ async fn main() {
 
 ```rust
 use volo_limit_thrift::ThriftLimitLayer;
-use volo_rate_limiter::ThreadBucketRateLimiterLayer;
+use volo_rate_limiter::ThreadingBucketRateLimiterLayer;
 
 #[volo::main]
 async fn main() {
@@ -46,7 +46,7 @@ async fn main() {
 
     volo_gen::ExampleServer::new(S)
         // add the concurrency limiter layer as well as the Thrift limiter adaptor layer.
-        .layer(ThriftLimitLayer(ThreadBucketRateLimiterLayer::with_qps(
+        .layer(ThriftLimitLayer(ThreadingBucketRateLimiterLayer::with_qps(
             100,
         )))
         .run(addr)

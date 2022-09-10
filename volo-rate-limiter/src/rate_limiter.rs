@@ -9,11 +9,11 @@ pub trait RateLimiter: Send {
     fn acquire(&self) -> Result<(), ()>;
 }
 
-mod atomic_lazy_bucket_rate_limiter;
-pub use atomic_lazy_bucket_rate_limiter::*;
+mod inaccurate_bucket_rate_limiter;
+pub use inaccurate_bucket_rate_limiter::*;
 
-mod thread_bucket_rate_limiter;
-pub use thread_bucket_rate_limiter::*;
+mod threading_bucket_rate_limiter;
+pub use threading_bucket_rate_limiter::*;
 
 #[cfg(feature = "tokio")]
 mod tokio_bucket_rate_limiter;

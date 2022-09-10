@@ -11,9 +11,9 @@
 ///
 /// This limiter is also observed to allow quite fewer requests to pass if request flow is uneven.
 #[derive(Clone)]
-pub struct AtomicLazyBucketRateLimiter(std::sync::Arc<AtomicLazyBucketRateLimiterSharedStatus>);
+pub struct InaccurateBucketRateLimiter(std::sync::Arc<InaccurateBucketRateLimiterSharedStatus>);
 
-struct AtomicLazyBucketRateLimiterSharedStatus {
+struct InaccurateBucketRateLimiterSharedStatus {
     duration_in_nanos: u64,
     quota: i64,
 
@@ -21,12 +21,12 @@ struct AtomicLazyBucketRateLimiterSharedStatus {
     tokens: std::sync::atomic::AtomicI64,
 }
 
-impl crate::RateLimiter for AtomicLazyBucketRateLimiter {
+impl crate::RateLimiter for InaccurateBucketRateLimiter {
     fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
         let quota: i64 = quota.try_into().expect("limit quota out of range");
 
         Self(std::sync::Arc::new(
-            AtomicLazyBucketRateLimiterSharedStatus {
+            InaccurateBucketRateLimiterSharedStatus {
                 duration_in_nanos: duration.into().as_nanos() as u64,
                 quota: quota,
                 last_updated_timestamp_in_nanos: std::sync::atomic::AtomicU64::new(
@@ -43,7 +43,7 @@ impl crate::RateLimiter for AtomicLazyBucketRateLimiter {
     }
 }
 
-impl AtomicLazyBucketRateLimiter {
+impl InaccurateBucketRateLimiter {
     fn fill_tokens(&self) {
         let now = Self::now_timestamp_in_nanos();
         let last_updated = self
@@ -91,11 +91,11 @@ impl AtomicLazyBucketRateLimiter {
     }
 }
 
-/// A [RateLimiterService](crate::RateLimiterService) with [AtomicLazyBucketRateLimiter]
+/// A [RateLimiterService](crate::RateLimiterService) with [InaccurateBucketRateLimiter]
 /// as its internal rate limiter implementation.
-pub type AtomicLazyBucketRateLimiterService<S> =
-    crate::RateLimiterService<S, AtomicLazyBucketRateLimiter>;
+pub type InaccurateBucketRateLimiterService<S> =
+    crate::RateLimiterService<S, InaccurateBucketRateLimiter>;
 
 /// The [volo::Layer] implementation of [RateLimiterService](crate::RateLimiterService)
-/// with [AtomicLazyBucketRateLimiter] as its internal rate limiter implementation.
-pub type AtomicLazyBucketRateLimiterLayer = crate::RateLimiterLayer<AtomicLazyBucketRateLimiter>;
+/// with [InaccurateBucketRateLimiter] as its internal rate limiter implementation.
+pub type InaccurateBucketRateLimiterLayer = crate::RateLimiterLayer<InaccurateBucketRateLimiter>;

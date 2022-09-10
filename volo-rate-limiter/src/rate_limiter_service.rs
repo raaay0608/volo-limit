@@ -1,5 +1,5 @@
+use crate::RateLimitError;
 use crate::RateLimiter;
-use crate::RateLimiterError;
 
 /// A template type that wrappes a [RateLimiter] implmentation as a [volo::Service].
 #[derive(Clone)]
@@ -20,13 +20,13 @@ where
         &'s mut self,
         cx: &'cx mut Cx,
         req: Request,
-    ) -> Result<Result<S::Response, S::Error>, RateLimiterError>
+    ) -> Result<Result<S::Response, S::Error>, RateLimitError>
     where
         's: 'cx,
     {
         match self.limiter.acquire() {
             Ok(_) => Ok(self.inner.call(cx, req).await),
-            Err(_) => Err(RateLimiterError),
+            Err(_) => Err(RateLimitError),
         }
     }
 }

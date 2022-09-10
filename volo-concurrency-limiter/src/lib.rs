@@ -18,15 +18,15 @@ struct ConcurrencyLimiterServiceSharedStatus {
 
 /// The error type returned by [ConcurrencyLimiterService] when determining that the request will be rejected.
 #[derive(Debug)]
-pub struct ConcurrencyLimiterError;
+pub struct ConcurrencyLimitError;
 
-impl std::fmt::Display for ConcurrencyLimiterError {
+impl std::fmt::Display for ConcurrencyLimitError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
         write!(f, "concurrency limited")
     }
 }
 
-impl std::error::Error for ConcurrencyLimiterError {}
+impl std::error::Error for ConcurrencyLimitError {}
 
 #[volo::service]
 impl<Cx, Request, S> volo::Service<Cx, Request> for ConcurrencyLimiterService<S>
@@ -39,7 +39,7 @@ where
         &'s mut self,
         cx: &'cx mut Cx,
         req: Request,
-    ) -> Result<Result<S::Response, S::Error>, ConcurrencyLimiterError>
+    ) -> Result<Result<S::Response, S::Error>, ConcurrencyLimitError>
     where
         's: 'cx,
     {
@@ -51,7 +51,7 @@ where
             self.status
                 .curr
                 .fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
-            return Err(ConcurrencyLimiterError);
+            return Err(ConcurrencyLimitError);
         }
 
         let res = self.inner.call(cx, req).await;

@@ -5,7 +5,7 @@
 #![feature(type_alias_impl_trait)]
 
 mod rate_limit_error;
-pub use rate_limit_error::RateLimiterError;
+pub use rate_limit_error::RateLimitError;
 
 mod rate_limiter;
 pub use rate_limiter::*;

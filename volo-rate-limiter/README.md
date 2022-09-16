@@ -26,7 +26,9 @@ async fn main() {
 
     volo_gen::ExampleSrver::new(S)
         // add the rate limiter layer as well as the gRPC limiter adaptor layer.
-        .layer(GrpcLimitLayer(ThreadingBucketRateLimiterLayer::with_qps(100)))
+        .layer(GrpcLimitLayer(RateLimiterLayer(
+            ThreadingBucketRateLimiter::new(std::time::Duration::from_secs(1), 100),
+        )))
         .run(addr)
         .await
         .unwrap();
@@ -46,8 +48,8 @@ async fn main() {
 
     volo_gen::ExampleServer::new(S)
         // add the concurrency limiter layer as well as the Thrift limiter adaptor layer.
-        .layer(ThriftLimitLayer(ThreadingBucketRateLimiterLayer::with_qps(
-            100,
+        .layer(ThriftLimitLayer(RateLimiterLayer(
+            ThreadingBucketRateLimiter::new(std::time::Duration::from_secs(1), 100),
         )))
         .run(addr)
         .await

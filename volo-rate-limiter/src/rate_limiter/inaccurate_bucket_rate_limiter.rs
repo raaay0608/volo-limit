@@ -22,7 +22,14 @@ struct InaccurateBucketRateLimiterSharedStatus {
 }
 
 impl crate::RateLimiter for InaccurateBucketRateLimiter {
-    fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
+    fn acquire(&self) -> Result<(), ()> {
+        self.fill_tokens();
+        self.do_acquire()
+    }
+}
+
+impl InaccurateBucketRateLimiter {
+    pub fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
         let quota: i64 = quota.try_into().expect("limit quota out of range");
 
         Self(std::sync::Arc::new(
@@ -37,13 +44,6 @@ impl crate::RateLimiter for InaccurateBucketRateLimiter {
         ))
     }
 
-    fn acquire(&self) -> Result<(), ()> {
-        self.fill_tokens();
-        self.do_acquire()
-    }
-}
-
-impl InaccurateBucketRateLimiter {
     fn fill_tokens(&self) {
         let now = Self::now_timestamp_in_nanos();
         let last_updated = self
@@ -90,12 +90,3 @@ impl InaccurateBucketRateLimiter {
             .as_nanos() as u64
     }
 }
-
-/// A [RateLimiterService](crate::RateLimiterService) with [InaccurateBucketRateLimiter]
-/// as its internal rate limiter implementation.
-pub type InaccurateBucketRateLimiterService<S> =
-    crate::RateLimiterService<S, InaccurateBucketRateLimiter>;
-
-/// The [volo::Layer] implementation of [RateLimiterService](crate::RateLimiterService)
-/// with [InaccurateBucketRateLimiter] as its internal rate limiter implementation.
-pub type InaccurateBucketRateLimiterLayer = crate::RateLimiterLayer<InaccurateBucketRateLimiter>;

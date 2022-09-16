@@ -12,7 +12,7 @@ pub struct TokioBucketRateLimiter {
 
 #[doc(cfg(feature = "tokio"))]
 struct TokioBucketRateLimiterStatus {
-    duration: std::time::Duration,
+    duration: tokio::time::Duration,
     quota: i64,
 
     tokens: std::sync::atomic::AtomicI64,
@@ -22,27 +22,6 @@ struct TokioBucketRateLimiterStatus {
 
 #[doc(cfg(feature = "tokio"))]
 impl crate::RateLimiter for TokioBucketRateLimiter {
-    fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
-        let quota: i64 = quota.try_into().expect("limit quota out of range");
-
-        let status = std::sync::Arc::new(TokioBucketRateLimiterStatus {
-            duration: duration.into(),
-            quota: quota,
-            tokens: std::sync::atomic::AtomicI64::new(quota),
-            notify: tokio::sync::Notify::new(),
-        });
-
-        let _status = status.clone();
-        let handle = tokio::spawn(async move {
-            TokioBucketRateLimiter::proc(_status).await;
-        });
-
-        Self {
-            status,
-            handle: std::sync::Arc::new(std::sync::Mutex::new(Some(handle))),
-        }
-    }
-
     fn acquire(&self) -> Result<(), ()> {
         match self
             .status
@@ -73,6 +52,27 @@ impl Drop for TokioBucketRateLimiter {
 
 #[doc(cfg(feature = "tokio"))]
 impl TokioBucketRateLimiter {
+    pub fn new(duration: impl Into<tokio::time::Duration>, quota: u64) -> Self {
+        let quota: i64 = quota.try_into().expect("limit quota out of range");
+
+        let status = std::sync::Arc::new(TokioBucketRateLimiterStatus {
+            duration: duration.into(),
+            quota: quota,
+            tokens: std::sync::atomic::AtomicI64::new(quota),
+            notify: tokio::sync::Notify::new(),
+        });
+
+        let _status = status.clone();
+        let handle = tokio::spawn(async move {
+            TokioBucketRateLimiter::proc(_status).await;
+        });
+
+        Self {
+            status,
+            handle: std::sync::Arc::new(std::sync::Mutex::new(Some(handle))),
+        }
+    }
+
     async fn proc(status: std::sync::Arc<TokioBucketRateLimiterStatus>) {
         let mut instant = tokio::time::Instant::now();
         loop {
@@ -89,13 +89,3 @@ impl TokioBucketRateLimiter {
         }
     }
 }
-
-/// A [RateLimiterService](crate::RateLimiterService) with [TokioBucketRateLimiter]
-/// as its internal rate limiter implementation.
-#[doc(cfg(feature = "tokio"))]
-pub type TokioBucketRateLimiterService<S> = crate::RateLimiterService<S, TokioBucketRateLimiter>;
-
-/// The [volo::Layer] implementation of [RateLimiterService](crate::RateLimiterService)
-/// with [TokioBucketRateLimiter] as its internal rate limiter implementation.
-#[doc(cfg(feature = "tokio"))]
-pub type TokioBucketRateLimiterLayer = crate::RateLimiterLayer<TokioBucketRateLimiter>;

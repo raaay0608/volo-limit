@@ -32,32 +32,7 @@ where
 }
 
 /// The implementation of [volo::Layer] for [RateLimiterService].
-pub struct RateLimiterLayer<L> {
-    duration: std::time::Duration,
-    quota: u64,
-
-    limiter: std::marker::PhantomData<L>,
-}
-
-impl<L> RateLimiterLayer<L> {
-    /// Creates a new [RateLimiterLayer] with limit duration and quota.
-    pub fn new(duration: impl Into<std::time::Duration>, quota: u64) -> Self {
-        Self {
-            duration: duration.into(),
-            quota,
-            limiter: std::marker::PhantomData,
-        }
-    }
-
-    /// Creates a new [RateLimiterLayer] with a limit duration of a second.
-    pub fn with_qps(qps: u64) -> Self {
-        Self {
-            duration: std::time::Duration::from_secs(1),
-            quota: qps,
-            limiter: std::marker::PhantomData,
-        }
-    }
-}
+pub struct RateLimiterLayer<L>(pub L);
 
 impl<S, L> volo::Layer<S> for RateLimiterLayer<L>
 where
@@ -68,7 +43,7 @@ where
     fn layer(self, inner: S) -> Self::Service {
         RateLimiterService {
             inner: inner,
-            limiter: std::sync::Arc::new(L::new(self.duration, self.quota)),
+            limiter: std::sync::Arc::new(self.0),
         }
     }
 }

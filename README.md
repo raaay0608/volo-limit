@@ -1,8 +1,18 @@
 ![Volo](https://github.com/volo-rs/.github/raw/main/.github/assets/logo.png?sanitize=true)
 
+## Overview
+
+`volo-limit` provides limit layers that can help prevent volo services from falling into overload.
+
+## Quick Start
+
+See:
+- [volo-concurrency-limiter](./volo-concurrency-limiter/README.md)
+- [volo-rate-limiter](./volo-rate-limiter/README.md)
+
 ## License
 
-Volo is dual-licensed under the MIT license and the Apache License (Version 2.0).
+`volo-limit` is dual-licensed under the MIT license and the Apache License (Version 2.0).
 
 See [LICENSE-MIT](https://github.com/volo-rs/.github/blob/main/LICENSE-MIT) and [LICENSE-APACHE](https://github.com/volo-rs/.github/blob/main/LICENSE-APACHE) for details.
 

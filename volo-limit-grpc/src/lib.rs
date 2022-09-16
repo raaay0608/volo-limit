@@ -5,7 +5,7 @@
 
 /// An adaptor layer between a limiter and a gRPC service.
 ///
-/// Given a arbitary [volo::Service] instance called `S`, a type-independent limiter service is a
+/// Given an arbitary [volo::Service] instance called `S`, a type-independent limiter service is a
 /// [volo::Service] with its return type is `Result<Result<S::Response, S::Error>, LimitError>`, where
 /// `LimitError` is the error type defined by the limiter and will be returned if request is
 /// determined to be limited.

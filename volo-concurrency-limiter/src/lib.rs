@@ -70,7 +70,7 @@ pub struct ConcurrencyLimiterServiceLayer {
 }
 
 impl ConcurrencyLimiterServiceLayer {
-    pub fn with_concurrency_limit(limit: u64) -> Self {
+    pub fn new(limit: u64) -> Self {
         Self { limit }
     }
 }
